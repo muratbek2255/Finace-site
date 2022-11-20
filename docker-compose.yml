@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  db:
+    image: nouchka/sqlite3:latest
+    volumes:
+      - ./data/db:/root/db
+    networks:
+      - my-network
+
+  finance_web:
+    container_name: finance_cont
+    build:
+      context: .
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    entrypoint: ./wsgi-entrypoint.sh
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    ports:
+      - 8000:8000
+    networks:
+      - my-network
+    env_file:
+      - .env
+
+  rabbitmq:
+    image: rabbitmq:3.7.4
+    container_name: rabbitmq
+    env_file: .env
+    networks:
+      - my-network
+
+  redis:
+    container_name: send_mail_redis
+    image: redis
+    env_file:
+      - .env
+    networks:
+      - my-network
+
+  celery_worker:
+    restart: always
+    build:
+      context: .
+    image: django_celery_example_celery_worker
+    volumes:
+      - .:/app
+    entrypoint: ./run-celery.sh
+    env_file:
+      - .env
+    networks:
+      - my-network
+    depends_on:
+      - redis
+      - rabbitmq
+      - finance_web
+
+
+volumes:
+  media:
+  static:
+  postgres_data:
+
+networks:
+  my-network:
