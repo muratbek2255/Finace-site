@@ -4,13 +4,9 @@ from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework.mixins import (
-    ListModelMixin, RetrieveModelMixin,
-    UpdateModelMixin, DestroyModelMixin, CreateModelMixin
-)
+from rest_framework.generics import GenericAPIView
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
 from twilio.rest import Client
 
 from apps.authentication.services import generate_otp
@@ -21,7 +17,7 @@ from apps.authentication.tasks import (
 from apps.users.models import User
 
 
-class RegistrationMixin:
+class RegistrationMixin(GenericAPIView):
     """Registration Mixin"""
     model = None
     serializer_class = None
@@ -63,7 +59,7 @@ class SendSmsMixin:
         user = User.objects.get(email=email)
         phone_number_valid = self.serializer_class(data=data)
         if not phone_number_valid.is_valid():
-            return Response({'errors': 'Не валидный номер телефона'})
+            return Response({'errors': 'Not valid phone number'})
 
         phone_number = data['phone_number']
         otp = self.otp
@@ -78,16 +74,16 @@ class SendSmsMixin:
 
         try:
             client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-            message_to_broadcast = f'Твой верификационный код {otp}'
+            message_to_broadcast = f'Your verification code: {otp}'
             client.messages.create(to=phone_number,
                                    from_=settings.TWILIO_NUMBER,
                                    body=message_to_broadcast)
 
-            return Response({'message': 'Код был отправлен', 'otp': otp})
+            return Response({'message': 'Code has been sent', 'otp': otp})
         except Exception as exc:
             print(f'we caucht {exc}')
             print(f'we caucht {type(exc)}')
-            return Response({'errors': 'Есть некоторые проблемы с отправкой кода'})
+            return Response({'errors': 'There are some problems with submitting the code'})
 
 
 class VerifyOtpMixin:
@@ -100,25 +96,24 @@ class VerifyOtpMixin:
         user = User.objects.filter(email=data['email'])
 
         if not user.exists():
-            return Response({'errors': 'Ты не зарегестрирован'})
+            return Response({'errors': 'You are not registered'})
 
         user = user[0]
 
         if user.otp_code != data['otp_code']:
-            return Response({'errors': 'Пожайлуста введите валидный код'})
+            return Response({'errors': 'Please enter a valid code'})
 
         otp_expired = self.serializer_class(data=data)
 
         if not otp_expired:
-            return Response({'errors': 'Закончился срок годности кода'})
+            return Response({'errors': 'Code expired'})
 
         user.phone_verified = True
         user.save()
-        return Response({'message': 'Номер активирован'})
+        return Response({'message': 'Number activated'})
 
 
 class ForgotPasswordMixin:
-    """Forgot password"""
 
     serializer_class = None
     permission_classes = None
@@ -134,7 +129,7 @@ class ForgotPasswordMixin:
             user.save()
             print(user)
             send_reset_code.delay(email=user.email, activation_code=user.activation_code)
-            return Response("Вам отправили сообщение", status=status.HTTP_200_OK)
+            return Response("You have been sent a message", status=status.HTTP_200_OK)
         else:
             return Response({'success': False, 'message': 'Could not password, invalid token'},
                             status.HTTP_400_BAD_REQUEST
@@ -142,11 +137,10 @@ class ForgotPasswordMixin:
 
 
 class ForgotPasswordCompleteMixin:
-    """Create password from email"""
     serializer_class = None
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            return Response('Вы успешно восстановили пароль', status=200)
+            return Response('You have successfully recovered your password', status=200)

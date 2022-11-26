@@ -56,7 +56,8 @@ INSTALLED_APPS = [
     'apps.expenses',
     'apps.categories',
     'apps.authentication',
-    'apps.users'
+    'apps.users',
+    'apps.budget'
 ]
 
 MIDDLEWARE = [
@@ -95,8 +96,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': env('POSTGRES_HOST'),
+        'PORT': env('POSTGRES_PORT')
     }
 }
 
@@ -176,3 +181,17 @@ ADMINS = (
     (env('ADMINS_PHONE_NUMBER'), env('ADMINS_USERNAME'), env('ADMINS_EMAIL'),
      env('ADMINS_FIRST_NAME'), env('ADMINS_LAST_NAME'), env('ADMINS_PASSWORD')),
 )
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+
+}

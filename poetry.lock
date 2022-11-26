@@ -432,6 +432,14 @@ python-versions = ">=3.6.2"
 wcwidth = "*"
 
 [[package]]
+name = "psycopg2-binary"
+version = "2.9.5"
+description = "psycopg2 - Python-PostgreSQL Database Adapter"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "pyjwt"
 version = "2.6.0"
 description = "JSON Web Token implementation in Python"
@@ -615,7 +623,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "437857dfdc6ac85db9680cae81b2e377d925f58b00a52a981bade19c395f1124"
+content-hash = "6224721e90e63c52b025e65eb6bbfe2cfac6c1ba0fa566bcde3fa7d49ff43e7d"
 
 [metadata.files]
 amqp = []
@@ -650,6 +658,7 @@ markupsafe = []
 packaging = []
 pillow = []
 prompt-toolkit = []
+psycopg2-binary = []
 pyjwt = []
 pyotp = []
 pyparsing = []

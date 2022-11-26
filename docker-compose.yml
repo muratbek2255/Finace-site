@@ -2,40 +2,33 @@ version: "3.9"
 
 services:
   db:
-    image: nouchka/sqlite3:latest
+    image: postgres:14.0-alpine
     volumes:
-      - ./data/db:/root/db
+      - postgres_data:/var/lib/postgresql/data/
     networks:
       - my-network
+    env_file:
+      - .env
 
   finance_web:
     container_name: finance_cont
     build:
       context: .
-    restart: unless-stopped
     volumes:
       - .:/app
     entrypoint: ./wsgi-entrypoint.sh
     depends_on:
       - db
       - redis
-      - rabbitmq
     ports:
-      - 8000:8000
+      - 8080:8080
     networks:
       - my-network
     env_file:
       - .env
 
-  rabbitmq:
-    image: rabbitmq:3.7.4
-    container_name: rabbitmq
-    env_file: .env
-    networks:
-      - my-network
-
   redis:
-    container_name: send_mail_redis
+    container_name: send_mail_redis_nah
     image: redis
     env_file:
       - .env
@@ -56,9 +49,7 @@ services:
       - my-network
     depends_on:
       - redis
-      - rabbitmq
       - finance_web
-
 
 volumes:
   media:

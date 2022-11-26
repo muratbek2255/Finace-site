@@ -1,3 +1,3 @@
 #!/bin/sh
 
-celery -A config worker -l info
+celery -A core worker -l info

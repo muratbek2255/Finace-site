@@ -1,27 +1,27 @@
-FROM python:3.9
-
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
+FROM python:3-slim as python
+ENV PYTHONUNBUFFERED=true
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install netcat -y
-RUN apt-get upgrade -y && apt-get install sqlite3 gcc python3-dev musl-dev -y
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
-    cd /usr/local/bin && \
-    ln -s /opt/poetry/bin/poetry && \
-    poetry config virtualenvs.create false
 
-COPY pyproject.toml ./poetry.lock* /app/
-RUN poetry install
+FROM python as poetry
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV PATH="$POETRY_HOME/bin:$PATH"
+RUN python -c 'from urllib.request import urlopen; print(urlopen("https://install.python-poetry.org").read().decode())' | python -
+COPY . ./
+RUN poetry install --no-interaction --no-ansi -vvv
 
-COPY . /app/
+
+
+FROM python as runtime
+ENV PATH="/app/.venv/bin:$PATH"
+COPY --from=poetry /app /app
 COPY ./wsgi-entrypoint.sh ./
 RUN chmod 777 ./wsgi-entrypoint.sh
 RUN chmod +x ./run-celery.sh
-RUN export $(grep -v "^#" .env | xargs)
 
 EXPOSE 8000
+
+CMD somerandomap
 
 ENTRYPOINT ["./wsgi-entrypoint.sh", "./run-celery.sh"]

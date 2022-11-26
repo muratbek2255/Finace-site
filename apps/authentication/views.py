@@ -18,7 +18,7 @@ from apps.authentication.serializers import (
 User = get_user_model()
 
 
-class UserRegistrationView(RegistrationMixin, views.APIView):
+class UserRegistrationView(RegistrationMixin):
     """Registration user"""
     model = User
     serializer_class = UserRegistrationSerializer
